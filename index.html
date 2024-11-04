@@ -124,19 +124,7 @@
 
         function formatElementByRank(element,rank) {
             let finalColor = 0;
-            if (rank > 0.95) {
-                finalColor = 184;
-            } else if (rank > 0.9) {
-                finalColor = 120;
-            } else if (rank > 0.75) {
-                finalColor = 80;
-            } else if (rank > 0.60) {
-                finalColor = 60;
-            } else if (rank > 0.40) {
-                finalColor = 40;
-            } else if (rank > 0.25) {
-                finalColor = 20;
-            }
+            finalColor = Math.pow(rank,3) * 200;
             element.style = `background-color: hsl(${finalColor}, 100%, 50%);`;
         }
 
