@@ -1,0 +1,71 @@
+body {
+    background-color: #dddddd;
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.center-align {
+    text-align: center;
+}
+
+th {
+    text-align: left;
+}
+table {
+    background-color: white;
+    width: 100%;
+}
+table, th, td {
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+
+th, td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+div#table {
+    display:block;
+    margin: auto;
+    text-align: center;
+    width: 75%;
+}
+
+div label {
+    vertical-align:middle;
+}
+
+input[type="range"] {
+    vertical-align:middle;
+}
+
+button {
+    font-size: 16px;
+}
+
+#filterDiv {
+    display:flex;
+    flex-direction: row;
+    text-align:center;
+    justify-content: center;
+}
+
+.create-table {
+    margin-bottom: 10px;
+}
+
+@media screen and (max-width: 600px) {
+    div#table {
+        width: 100%;
+    }
+
+    th, td {
+        font-size: 12px;
+    }
+
+    #filterDiv {
+        
+        flex-direction: column;
+        text-align:right;
+    }
+}
