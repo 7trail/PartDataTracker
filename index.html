@@ -48,6 +48,18 @@
                 vertical-align:middle;
             }
 
+            button {
+                font-size: 16px;
+            }
+
+            #filterDiv {
+                display:flex;
+                flex-direction: row;
+                text-align:center;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+
             @media screen and (max-width: 600px) {
                 div#table {
                     width: 100%;
@@ -55,6 +67,12 @@
 
                 th, td {
                     font-size: 12px;
+                }
+
+                #filterDiv {
+                    
+                    flex-direction: column;
+                    text-align:right;
                 }
             }
 
@@ -65,27 +83,39 @@
         <header class="center-align">
             <h1>PC Part Analysis</h1>
         </header>
-        <div class="center-align">
-            <label for="priceWeightSlider">Price</label>
-            <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="priceWeightSlider">
-            <label for="core_countWeightSlider">Cores</label>
-            <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_countWeightSlider">
-            <label for="core_clockWeightSlider">Clock Speed</label>
-            <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_clockWeightSlider">
-            <label for="tdpWeightSlider">TDP</label>
-            <input type="range" min="0" max="1" value="0" step="0.1" class="slider" id="tdpWeightSlider">
+        <div id="filterDiv">
+            <div>
+                <label for="priceWeightSlider">Price</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="priceWeightSlider">
+            </div>
+            <div>
+                <label for="core_countWeightSlider">Cores</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_countWeightSlider">
+            </div>
 
+            <div>
+                <label for="core_clockWeightSlider">Clock Speed</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_clockWeightSlider">
+            </div>
+            
+            <div>
+                <label for="tdpWeightSlider">TDP</label>
+                <input type="range" min="0" max="1" value="0" step="0.1" class="slider" id="tdpWeightSlider">
+            </div>
+        </div>
+        <div class="center-align">
+            <button onclick="createTable();">Regenerate Table</button>
         </div>
         <div id="table">
             <table>
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Ranking</th>
                         <th>Price</th>
                         <th>Cores</th>
                         <th>Clock Speed</th>
                         <th>TDP</th>
-                        <th>Ranking</th>
                     </tr>
                 </thead>
                 <tbody id="mainTable">
@@ -255,13 +285,13 @@
 
                 tableBody.appendChild(newRow);
                 newRow.appendChild(newName);
+                newRow.appendChild(newRanking);
                 for (let attr of attributes) {
                     let newTablePiece = document.createElement("td");
                     let text = (attr == "price") ? formatter.format(thisPartData[attr]) : new Intl.NumberFormat().format(thisPartData[attr]);
                     newTablePiece.textContent = attributeFormat[attr].replace("dataHere",text);
                     newRow.append(newTablePiece);
                 }
-                newRow.appendChild(newRanking);
             }
 
         }
