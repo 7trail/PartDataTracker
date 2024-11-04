@@ -5,6 +5,7 @@
             // Function to fetch HTML from a given URL
             async function fetchHTML(url) {
                 try {
+                    url = 'https://corsproxy.io/?' + encodeURIComponent(url);
                     const response = await fetch(url);
                     
                     // Check if the response is ok (status in the range 200-299)

@@ -40,7 +40,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Ranking</th>
+                        <th>Overall Value</th>
                         <th>Price</th>
                         <th>Cores</th>
                         <th>Clock Speed</th>
@@ -122,10 +122,16 @@
             return d;
         }
 
-        function formatElementByRank(element,rank) {
+        function formatElementByRank(element,rank, saturation, lightness) {
             let finalColor = 0;
+            if (saturation == undefined) {
+                saturation = 100;
+            }
+            if (lightness == undefined) {
+                lightness = 50;
+            }
             finalColor = Math.pow(rank,3) * 200;
-            element.style = `background-color: hsl(${finalColor}, 100%, 50%);`;
+            element.style = `background-color: hsl(${finalColor}, ${saturation}%, ${lightness}%);`;
         }
 
         function easyGetPercentile(element, key, reverse, arr) {
@@ -202,6 +208,8 @@
                     let newTablePiece = document.createElement("td");
                     let text = (attr == "price") ? formatter.format(thisPartData[attr]) : new Intl.NumberFormat().format(thisPartData[attr]);
                     newTablePiece.textContent = attributeFormat[attr].replace("dataHere",text);
+                    let rank2 = rawRankDict[part["name"]][attr];
+                    formatElementByRank(newTablePiece,rank2,100,rank * 30 + 20);
                     newRow.append(newTablePiece);
                 }
             }
