@@ -24,6 +24,10 @@ th, td {
     padding-right: 5px;
 }
 
+td {
+    text-align:right;
+}
+
 div#table {
     display:block;
     margin: auto;
