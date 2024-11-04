@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Part Comparison</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="cpuData.js"></script>
+        <style>
+
+            body {
+                background-color: #dddddd;
+                font-family:Verdana, Geneva, Tahoma, sans-serif;
+            }
+
+            .center-align {
+                text-align: center;
+            }
+
+            th {
+                text-align: left;
+            }
+            table {
+                background-color: white;
+                width: 100%;
+            }
+            table, th, td {
+                border-collapse: collapse;
+                border: 1px solid black;
+            }
+
+            th, td {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+
+            div#table {
+                display:block;
+                margin: auto;
+                text-align: center;
+                width: 75%;
+            }
+
+            div label {
+                vertical-align:middle;
+            }
+
+            input[type="range"] {
+                vertical-align:middle;
+            }
+
+            @media screen and (max-width: 600px) {
+                div#table {
+                    width: 100%;
+                }
+
+                th, td {
+                    font-size: 12px;
+                }
+            }
+
+        </style>
+
+    </head>
+    <body>
+        <header class="center-align">
+            <h1>PC Part Analysis</h1>
+        </header>
+        <div class="center-align">
+            <label for="priceWeightSlider">Price</label>
+            <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="priceWeightSlider">
+            <label for="core_countWeightSlider">Cores</label>
+            <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_countWeightSlider">
+            <label for="core_clockWeightSlider">Clock Speed</label>
+            <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_clockWeightSlider">
+            <label for="tdpWeightSlider">TDP</label>
+            <input type="range" min="0" max="1" value="0" step="0.1" class="slider" id="tdpWeightSlider">
+
+        </div>
+        <div id="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Cores</th>
+                        <th>Clock Speed</th>
+                        <th>TDP</th>
+                        <th>Ranking</th>
+                    </tr>
+                </thead>
+                <tbody id="mainTable">
+
+                </tbody>
+            </table>
+        </div>
+    </body>
+    <script>
+        let attributes = ["price","core_count","core_clock","tdp"];
+        let attributeFormat = {
+            "price" : "dataHere",
+            "core_count" : "dataHere",
+            "core_clock" : "dataHere GHz",
+            "tdp": "dataHereW"
+        };
+        let reverseSort = ["price"];
+        let partData = cpuData;
+
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+
+            // These options can be used to round to whole numbers.
+            trailingZeroDisplay: 'stripIfInteger'   // This is probably what most people
+                                                    // want. It will only stop printing
+                                                    // the fraction when the input
+                                                    // amount is a round number (int)
+                                                    // already. If that's not what you
+                                                    // need, have a look at the options
+                                                    // below.
+        });
+
+        function getWeights() {
+            let weightDict = {};
+            for (let attr of attributes) {
+                if (document.getElementById(attr+"WeightSlider")) {
+                    weightDict[attr] = document.getElementById(attr+"WeightSlider").value;
+                } else {
+                    weightDict[attr] = 1;
+                }
+            }
+            return weightDict;
+        }
+
+        function getPercentile(array,element) {
+            if (array.includes(element)) {
+                let ind = array.indexOf(element);
+                return ind*1.0/(1.0 * array.length);
+            }
+            return -1;
+        }
+
+        function getPartByName(partName) {
+            for (let p of partData) {
+                if (p["name"] == partName) {
+                    return p;
+                }
+            }
+            return null;
+        }
+
+        function getValueArray(key) {
+            let d = [];
+            for (let el of partData) {
+                d.push(el[key]);
+            }
+            return d;
+        }
+
+        function formatElementByRank(element,rank) {
+            let finalColor = 0;
+            if (rank > 0.95) {
+                finalColor = 184;
+            } else if (rank > 0.9) {
+                finalColor = 120;
+            } else if (rank > 0.75) {
+                finalColor = 80;
+            } else if (rank > 0.60) {
+                finalColor = 60;
+            } else if (rank > 0.40) {
+                finalColor = 40;
+            } else if (rank > 0.25) {
+                finalColor = 20;
+            }
+            element.style = `background-color: hsl(${finalColor}, 100%, 50%);`;
+        }
+
+        function easyGetPercentile(element, key, reverse, arr) {
+            if (typeof(arr) == "undefined") {
+                arr = getValueArray(key).sort(compareFn = numberCompFn);
+            }
+            arr = arr.slice();
+            if (reverse !== undefined && reverse) {
+                arr = arr.reverse();
+            }
+            return getPercentile(arr, element[key]);
+        }
+
+        let numberCompFn = (a, b) => (a > b);
+
+        //Now to calculate the weighted score of each part
+
+        let tableBody = document.getElementById("mainTable");
+
+        function createTable() {
+            let rawValueDict = {};
+            let rawRankDict = {};
+            let rawValueArr = [];
+
+            let sortedArrayDict = {}; // This will precompute the sorted arrays for each attribute. Since this shouldn't change during runtime, it's okay to run these calculations ahead of time. This saves a ridiculous amount of loading time.
+            for (let attr of attributes) {
+                sortedArrayDict[attr] = getValueArray(attr).sort(compareFn = numberCompFn);
+            }
+
+            for (let part of partData) {
+                let rawRankData = {};
+                let rawValue = 0;
+                for (let attr of attributes) {
+                    let attrValue = easyGetPercentile(part,attr,reverseSort.includes(attr), sortedArrayDict[attr]);
+                    rawRankData[attr] = attrValue;
+                    rawValue += attrValue * getWeights()[attr];
+                }
+                /*let pricePercentile = easyGetPercentile(part,"price",true);
+                let vramPercentile = easyGetPercentile(part,"vram",false);
+                let memoryPercentile = easyGetPercentile(part,"memory",false);*/
+
+                //let rawValue = pricePercentile * priceWeight + vramPercentile * vramWeight + memoryPercentile * memoryWeight;
+
+                rawValueArr.push(rawValue);
+                rawValueDict[part["name"]] = rawValue;
+                rawRankDict[part["name"]] = rawRankData;
+            }
+
+            let finalValueDict = []; //Finally, to get the final distribution across elements
+            
+            for (let part of partData) {
+                let v = rawValueDict[part['name']];
+                let finalValue = getPercentile(rawValueArr.sort(compareFn=numberCompFn),v);
+                finalValueDict.push({"name": part['name'], "value":finalValue});
+            }
+
+            //first clear the table
+
+            finalValueDict = finalValueDict.sort(compareFn = (a,b) => (a["value"] > b["value"])).reverse();
+            while(tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
+
+            //then add each element in sequence
+            for (let part of finalValueDict) {
+                let newRow = document.createElement("tr");
+                let newName = document.createElement("th");
+                
+                let newRanking = document.createElement("td");
+
+                let thisPartData = getPartByName(part["name"]);
+                let rank = part["value"];
+
+                newName.textContent = thisPartData["name"];
+                newRanking.textContent = (rank*100).toPrecision(4).toString()+"%";
+
+                formatElementByRank(newRanking, rank); 
+                //formatElementByRank(newPrice, rawRankDict[part["name"]]["price"]);
+                //formatElementByRank(newVRAM, rawRankDict[part["name"]]["vram"]);
+                //formatElementByRank(newMemory, rawRankDict[part["name"]]["memory"]);
+
+                tableBody.appendChild(newRow);
+                newRow.appendChild(newName);
+                for (let attr of attributes) {
+                    let newTablePiece = document.createElement("td");
+                    let text = (attr == "price") ? formatter.format(thisPartData[attr]) : new Intl.NumberFormat().format(thisPartData[attr]);
+                    newTablePiece.textContent = attributeFormat[attr].replace("dataHere",text);
+                    newRow.append(newTablePiece);
+                }
+                newRow.appendChild(newRanking);
+            }
+
+        }
+        //console.log(finalValueDict.sort(compareFn = (a,b) => (a["value"] > b["value"])).reverse());
+        createTable();
+
+    </script>
+</html>
