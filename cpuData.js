@@ -18162,11 +18162,14 @@ for (let dataPiece of oldCpuData) {
             skip = true;
         }
     }
-    if (skip || dataPiece.price == null) {
+    if (skip || dataPiece.price[1] == "0.00") {
         continue;   
     }
     dataPiece["name"] = dataPiece["brand"] + " " + dataPiece["model"];
     dataPiece["price"] = Number(dataPiece["price"][1]);
     dataPiece["core_clock"] = Number(dataPiece["base_clock"]["cycles"]) / 1000000000;
+    if (dataPiece["integrated_graphics"] == null) {
+        dataPiece["integrated_graphics"] = "--";
+    }
     partData.push(dataPiece);
 }

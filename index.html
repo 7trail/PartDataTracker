@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Part Comparison</title>
+        <title>CPU Comparison</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="cpuData.js"></script>
@@ -46,6 +46,8 @@
                         <th>Cores</th>
                         <th>Clock Speed</th>
                         <th>TDP</th>
+                        <th>Integrated Graphics</th>
+                        <th>Multithreading</th>
                     </tr>
                 </thead>
                 <tbody id="mainTable">
@@ -56,6 +58,7 @@
     </body>
     <script>
         let attributes = ["price","cores","core_clock","tdp"];
+        let displayOnly = ["integrated_graphics","multithreading"];
         let attributeFormat = {
             "price" : "dataHere",
             "cores" : "dataHere",
@@ -151,6 +154,12 @@
                     newTablePiece.textContent = attributeFormat[attr].replace("dataHere",text);
                     let rank2 = rawRankDict[part["name"]][attr];
                     formatElementByRank(newTablePiece,rank2); // rank * 20 + 30 for later
+                    newRow.append(newTablePiece);
+                }
+                for (let newAttr of displayOnly) {
+                    let newTablePiece = document.createElement("td");
+                    newTablePiece.textContent = thisPartData[newAttr];
+                    formatElementByRank(newTablePiece, rank); 
                     newRow.append(newTablePiece);
                 }
             }
