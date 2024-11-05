@@ -7,6 +7,26 @@ body {
     text-align: center;
 }
 
+#headerBar {
+    display: block;
+    margin: auto;
+    width: 50%;
+    background-color: black;
+    color: white;
+    padding: 5px;
+    font-size: 18px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+#headerBar a:active {
+    color: white;
+}
+
+#headerBar a:visited {
+    color: white;
+}
+
 th {
     text-align: left;
 }

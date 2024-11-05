@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>GPU Comparison</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="videoCardData.js"></script>
+        <script src="sharedCode.js"></script>
+        <link rel="stylesheet" href="style.css">
+
+    </head>
+    <body>
+        <header class="center-align">
+            <h1>PC Part Analysis</h1>
+            <div id="headerBar">
+                <a href="index.html">CPU</a>
+                <a href="videoCard.html">Video Card</a>
+            </div>
+        </header>
+        <div id="filterDiv">
+            <div>
+                <label for="priceWeightSlider">Price</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="priceWeightSlider">
+            </div>
+            <div>
+                <label for="vramWeightSlider">VRAM</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="vramWeightSlider">
+            </div>
+
+            <div>
+                <label for="core_clockWeightSlider">Clock Speed</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="core_clockWeightSlider">
+            </div>
+            
+            <div>
+                <label for="boost_clockWeightSlider">Boosted Clock</label>
+                <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="boost_clockWeightSlider">
+            </div>
+        </div>
+        <div class="center-align create-table">
+            <button onclick="createTable();">Regenerate Table</button>
+        </div>
+        <div id="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Overall Value</th>
+                        <th>Price</th>
+                        <th>VRAM</th>
+                        <th>Clock Speed</th>
+                        <th>Boosted Clock</th>
+                        <th>Chipset</th>
+                        <th>Length</th>
+                    </tr>
+                </thead>
+                <tbody id="mainTable">
+
+                </tbody>
+            </table>
+        </div>
+    </body>
+    <script>
+        let attributes = ["price","vram","core_clock","boost_clock"];
+        let displayOnly = ["chipset","length"];
+        let attributeFormat = {
+            "price" : "dataHere",
+            "vram" : "dataHere GB",
+            "core_clock" : "dataHere GHz",
+            "boost_clock" : "dataHere GHz",
+        };
+        let reverseSort = ["price"];
+        //let partData = cpuData;
+
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+
+            // These options can be used to round to whole numbers.
+            //trailingZeroDisplay: 'stripIfInteger'   // This is probably what most people
+                                                    // want. It will only stop printing
+                                                    // the fraction when the input
+                                                    // amount is a round number (int)
+                                                    // already. If that's not what you
+                                                    // need, have a look at the options
+                                                    // below.
+        });
+
+        
+        let numberCompFn = (a, b) => (a > b);
+
+        //Now to calculate the weighted score of each part
+
+        let tableBody = document.getElementById("mainTable");
+
+        function createTable() {
+            let rawValueDict = {};
+            let rawRankDict = {};
+            let rawValueArr = [];
+
+            let sortedArrayDict = {}; // This will precompute the sorted arrays for each attribute. Since this shouldn't change during runtime, it's okay to run these calculations ahead of time. This saves a ridiculous amount of loading time.
+            for (let attr of attributes) {
+                sortedArrayDict[attr] = getValueArray(attr).sort(compareFn = numberCompFn);
+            }
+
+            for (let part of partData) {
+                let rawRankData = {};
+                let rawValue = 0;
+                for (let attr of attributes) {
+                    let attrValue = easyGetPercentile(part,attr,reverseSort.includes(attr), sortedArrayDict[attr]);
+                    rawRankData[attr] = attrValue;
+                    rawValue += attrValue * getWeights()[attr];
+                }
+
+                rawValueArr.push(rawValue);
+                rawValueDict[part["name"]] = rawValue;
+                rawRankDict[part["name"]] = rawRankData;
+            }
+
+            let finalValueDict = []; //Finally, to get the final distribution across elements
+            
+            for (let part of partData) {
+                let v = rawValueDict[part['name']];
+                let finalValue = getPercentile(rawValueArr.sort(compareFn=numberCompFn),v);
+                finalValueDict.push({"name": part['name'], "value":finalValue});
+            }
+
+            //first clear the table
+
+            finalValueDict = finalValueDict.sort(compareFn = (a,b) => (a["value"] > b["value"])).reverse();
+            while(tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
+
+            //then add each element in sequence
+            for (let part of finalValueDict) {
+                let newRow = document.createElement("tr");
+                let newName = document.createElement("th");
+                
+                let newRanking = document.createElement("td");
+
+                let thisPartData = getPartByName(part["name"]);
+                let rank = part["value"];
+
+                newName.textContent = thisPartData["name"];
+                finalColor = Math.pow(rank,3) * 200;
+                newName.style = `background: linear-gradient(to right, white, hsl(${finalColor}, 100%, 50%));`;
+                newRanking.textContent = (rank*100).toPrecision(4).toString()+"%";
+
+                formatElementByRank(newRanking, rank); 
+
+                tableBody.appendChild(newRow);
+                newRow.appendChild(newName);
+                newRow.appendChild(newRanking);
+                for (let attr of attributes) {
+                    let newTablePiece = document.createElement("td");
+                    let text = (attr == "price") ? formatter.format(thisPartData[attr]) : new Intl.NumberFormat().format(thisPartData[attr]);
+                    newTablePiece.textContent = attributeFormat[attr].replace("dataHere",text);
+                    let rank2 = rawRankDict[part["name"]][attr];
+                    formatElementByRank(newTablePiece,rank2); // rank * 20 + 30 for later
+                    newRow.append(newTablePiece);
+                }
+                for (let newAttr of displayOnly) {
+                    let newTablePiece = document.createElement("td");
+                    newTablePiece.textContent = thisPartData[newAttr];
+                    formatElementByRank(newTablePiece, rank); 
+                    newRow.append(newTablePiece);
+                }
+            }
+
+        }
+        //console.log(finalValueDict.sort(compareFn = (a,b) => (a["value"] > b["value"])).reverse());
+        createTable();
+
+        const rangeInputs = document.querySelectorAll('.input[type="range"]');
+        rangeInputs.forEach((element) => {
+            element.addEventListener("input", function() {
+                console.log("WE ARE HERE");
+                createTable();
+            });
+        });
+
+    </script>
+</html>
